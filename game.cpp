@@ -316,7 +316,7 @@ class Mystry: public Coin, public Bomb, public Arrow{
 public:
     Mystry() { }
     // default aurguments
-    Mystry(int startX, int startY, string symbol = "👽") : Object(startX, startY, symbol) {}
+    Mystry(int startX, int startY, string symbol = "🎃") : Object(startX, startY, symbol) {}
 
     bool move() {
         if (!x) return false;
@@ -359,6 +359,8 @@ public:
         cout << "Highest SCORE : " << highest_score[diffLevel];
         gotoxy(55, 0);
         cout << "Difficulty : " << DIFFICULTY[diffLevel];
+        gotoxy(5, 0);
+        cout << "SCORE : ";
     }
 
     ~Game(){
@@ -374,8 +376,10 @@ public:
     }
 
     void printScore(){
-        gotoxy(5, 0);
-        cout << "SCORE : " << player->score;
+        gotoxy(13, 0);
+        cout << "          ";
+        gotoxy(13, 0);
+        cout << player->score;
     }
 
     // update frame, return false for gameover
