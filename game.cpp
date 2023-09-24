@@ -11,7 +11,7 @@ using namespace std;
 const int height = 15;
 const int width = 80;
 long long highest_score[] = {0, 0, 0};
-const string DIFFICULTY[] = {"Easy", "Hard", "Impossible"};
+const string DIFFICULTY[] = {"Easy", "Normal", "Hard"};
 
 const string fileName = "highest_score.txt";
 
@@ -56,20 +56,18 @@ bool getYN(){
     }
 }
 
-int getDifficultyLevel(){
+int getMainInput(){
     char c;
     while(true){
         c = getch();
         if(c == '1') return 1;
         if(c == '2') return 2;
         if(c == '3') return 3;
-
         if(c == 'q') return 0;
     }
 }
 
-
-template <class T>
+template<class T>
 class LastPoints
 {
     int counter;
@@ -78,16 +76,15 @@ public:
     LastPoints() : counter(0){ }
 
     void update(){
+        // show last point update for 4 sec
         if(counter == 40){
             clear();
             counter = 0;
-        }else{
+        }else
             counter++;
-        }
     }
 
-    template<class T1>
-    void set(T1 data, string color){
+    void set(T data, string color){
         clear();
         gotoxy(10, 1);
         cout << color << data << RESET;
@@ -100,11 +97,10 @@ public:
     }
 };
 
-LastPoints<int> lastPoints;
-
 class Game;
 
 class Player {
+private:
     int x, y;
     long long score;
     bool dead;
@@ -180,22 +176,23 @@ public:
     }
 
     // operator overloading via member function
-    void operator&(int score){
+    void operator+(int score){
         if(!dead){
             this->score += score; 
         }
     }
 
-    // operator overloading via friend function
-    friend void operator|(Player &p, int score){
-        if(!p.dead){
-            p.score -= score;
-            if(p.score < 0)
-                p.score = 0;
+    // operator overloading via member function
+    void operator-(int score){
+        if(!dead){
+            score -= score;
+            if(score < 0)
+                score = 0;
         }
     }
 
-    short isColided(int obj_x, int obj_y){
+    template<class T>
+    T isColided(int obj_x, int obj_y){
         if(y == obj_y && x + 4 >= obj_x && x <= obj_x){
             return 1; // direct hit
         }else if((y+1 == obj_y && x + 3 >= obj_x && x+2 <= obj_x) || (y-1 == obj_y && x + 3 >= obj_x && x+2 <= obj_x)){
@@ -207,6 +204,7 @@ public:
     friend class Game;
 };
 
+LastPoints<string> lastPoints;
 vector<string> Player::plane = vector<string>({"===>", "/", "\\"});
 
 class Object {
@@ -214,11 +212,13 @@ public:
     int x, y;
     string symbol;
     Object() {x=0; y=0;}
-    Object(int startX, int startY, string symbol) : x(startX), y(startY), symbol(symbol){}
+    Object(int x, int y, string symbol) : x(x), y(y), symbol(symbol){}
 
-    void draw() {
-        gotoxy(x, y);
-        cout << symbol;
+    // draw
+    friend ostream& operator<<(ostream& out, Object *obj){
+        gotoxy(obj->x, obj->y);
+        out << obj->symbol;
+        return out;
     }
 
     void erase() {
@@ -226,13 +226,15 @@ public:
         cout << " ";
     }
 
+    // virtual function
     virtual bool move(){
         if (!x) return false;
         x--;
         return true;
     }
+
     // pure virtual function
-    virtual bool detectColide(Player *p) = 0; // safe colide : true, gameover colide: false
+    virtual bool detectColide(Player *p) = 0;
 };
 
 class Arrow: virtual public Object{
@@ -241,20 +243,19 @@ public:
     Arrow(int startX, int startY) : Object(startX, startY, ARROWS[rand() % ArrowCount]) {}
 
     bool detectColide(Player *p){
-        short c = p->isColided(x, y);
+        short c = p->isColided<short>(x, y);
         if(c == 1){
             p->die();
             return true;
         }else if(c == 2){
             int r = (200 + rand() % 301);
-            *p | r;
+            *p - r;
             lastPoints.set("-" + to_string(r), RED);
             return true;
         }
         return false;
     }
 };
-
 
 class Bomb: virtual public Object{
 public:
@@ -264,19 +265,12 @@ public:
     // copy constructor
     Bomb(const Bomb &b){
         x = b.x;
-        y = b.y+1; // create new bomb at bottom
-        symbol = b.symbol;
-    }
-
-    bool move() {
-        if (!x) return false;
-        x--;
-        return true;
+        y = b.y-1; // create new bomb at bottom
+        symbol = b.symbol; // same symbol
     }
 
     bool detectColide(Player *p){
-        short c = p->isColided(x, y);
-        if(c){
+        if(p->isColided<bool>(x, y)){
             p->die();
             return true;
         }
@@ -289,21 +283,15 @@ public:
     Coin () {}
     Coin(int startX, int startY) : Object(startX, startY, COINS[rand() % CoinsCount]) {}
 
-    bool move() {
-        if (!x) return false;
-        x--;
-        return true;
-    }
-
     bool detectColide(Player *p){
-        short c = p->isColided(x, y);
+        short c = p->isColided<short>(x, y);
         if(c == 1){
-            *p & 1000;
+            *p - 1000;
             lastPoints.set("+1000", GREEN);
             return true;
         }else if(c == 2){
             int r = (500 + rand() % 501);
-            *p & r; // coin means 500-1000 points
+            *p + r; // coin means 500-1000 points
             lastPoints.set("+" + to_string(r), GREEN);
             return true;
         }
@@ -319,7 +307,8 @@ public:
     Mystry(int startX, int startY, string symbol = "🎃") : Object(startX, startY, symbol) {}
 
     bool move() {
-        if (!x) return false;
+        // it disapper early
+        if (x-3 == 0) return false;
         x--;
         return true;
     }
@@ -393,7 +382,7 @@ public:
                 ++it;
             }
             if (player->dead)
-                return false;
+                return false; // no next frame
         }
 
         // erase & move forward
@@ -412,7 +401,6 @@ public:
             {5, 8, 4},
             {4, 15, 1},
         };
-
         int totalPercentage = 100;
         int maxObjectInBoard[3] = {20, 30, 40};
 
@@ -442,16 +430,17 @@ public:
             }
         }
 
-        // draw
         for (auto it: objects){
-            it->draw();
+            cout << it; // draw objects
         }
+
+        // draw player
         player->erase();
         player->draw();
-        *player & 1;
+        *player + 1;
         printScore();
         lastPoints.update();
-        return true;
+        return true; // next frame avaiable
     }
 
     void gameOver() {
@@ -505,7 +494,7 @@ void startAGame(int diffLevel){
         }
         
         // update Frame
-        if(!++game){
+        if(++game == false){
             game.gameOver();
             break;
         }
@@ -518,7 +507,7 @@ void startAGame(int diffLevel){
 void printFirstScreen(){
     system("cls");
     cout << "\n\t\t\t\t"<<"🛩️"<<" FLY ME "<<"🛩️"<<"\n";
-    cout << "\t\t\t"<<"🛩️"<<" A Project by Roll:" << GREEN << "2107050 " << RESET <<"🛩️"<<"\n\n";
+    cout << "\t\t\t"<<"🛩️"<<" A Project by Roll: " << GREEN << "2107050 " << RESET <<"🛩️"<<"\n\n";
     cout << CYAN << "\t\t\t\t     "<<Player::plane[2]<<"\n" << RESET;
     cout << GREEN <<"\t\t\t\t   "<< Player::plane[0] <<"\n" << RESET;
     cout << CYAN << "\t\t\t\t     "<< Player::plane[1] <<"" << RESET;
@@ -528,13 +517,14 @@ void printFirstScreen(){
     cout << "\n\t\t3. "<<"◀"<<"  "<<"⚡"<<"       => Direct hit: You " << RED << "DIE" << RESET <<"☠️";
     cout << "\n\t\t4. "<<"🟡"<<"  "<<"🍏"<<"  "<<"💲"<<"  => On wings  : Increase score by (" << GREEN << "500-1000" << RESET <<")";
     cout << "\n\t\t5. "<<"🟡"<<"  "<<"🍏"<<"  "<<"💲"<<"  => Direct hit: Increase score by " << GREEN << "1000" << RESET;
+    cout << "\n\t\t6. "<<"🎃"<<"        "<<"  => "<< MAGENTA << "Mystry" << RESET << " Item: Can be " << MAGENTA << "AYTHING" << RESET << " [Hard Mode only]";
 
-    cout << "\n\n\tEnter (1 / 2 / 3) to start the Game in (Easy / Hard / Impossible) Mode\n";
+    cout << "\n\n\tEnter (1 / 2 / 3) to start the Game in (Easy / Normal / Hard) Mode\n";
     cout << "\n\t\t            Enter 'q' to Quit the Game\n";
     cout << "\n\t\t\t      Highest Scores :";
     cout << "\n\t\t\t          Easy       : " << highest_score[0];
-    cout << "\n\t\t\t          Hard       : " << highest_score[1];
-    cout << "\n\t\t\t          Impossible : " << highest_score[2];
+    cout << "\n\t\t\t          Normal     : " << highest_score[1];
+    cout << "\n\t\t\t          Hard       : " << highest_score[2];
     cout << endl;
 }
 
@@ -546,7 +536,7 @@ int main() {
     printFirstScreen();
 
     int diffLevel = 0;
-    while(diffLevel = getDifficultyLevel()){
+    while(diffLevel = getMainInput()){
         do{
             startAGame(diffLevel-1);
             cout << "\n\n\t\tPlay Again (y/n)?" << endl;
