@@ -176,16 +176,16 @@ public:
     }
 
     // operator overloading via member function
-    void operator+(int score){
+    void operator+(int scr){
         if(!dead){
-            this->score += score; 
+            score += scr; 
         }
     }
 
     // operator overloading via member function
-    void operator-(int score){
+    void operator-(int scr){
         if(!dead){
-            score -= score;
+            score -= scr;
             if(score < 0)
                 score = 0;
         }
@@ -286,7 +286,7 @@ public:
     bool detectColide(Player *p){
         short c = p->isColided<short>(x, y);
         if(c == 1){
-            *p - 1000;
+            *p + 1000;
             lastPoints.set("+1000", GREEN);
             return true;
         }else if(c == 2){
