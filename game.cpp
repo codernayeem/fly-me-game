@@ -16,16 +16,11 @@ const string DIFFICULTY[] = {"Easy", "Normal", "Hard"};
 const string fileName = "highest_score.txt";
 
 const string RESET = "\033[0m";
-const string BLACK = "\033[30m";
 const string RED = "\033[31m";
 const string GREEN = "\033[32m";
 const string YELLOW = "\033[33m";
-const string BLUE = "\033[34m";
 const string MAGENTA = "\033[35m";
 const string CYAN = "\033[36m";
-const string WHITE = "\033[37m";
-
-//💥💥☠️💀👽🍎🍏🎃🏆✈️🚁🛩️🔥⚡🔑🟡🏁🪙💲💵✴️◀️💣
 
 const int BombCount = 3;
 string BOMBS[BombCount] = {"💥", "💀", "🚁"};
@@ -36,9 +31,6 @@ string COINS[CoinsCount] = {"🟡", "🍏", "💲"};
 const int ArrowCount = 2;
 string ARROWS[ArrowCount] = {"◀", "⚡"};
 
-const int WINGS_POINT_CUT_RANGE[] = {200, 400};
-const int WINGS_POINT_ADD_RANGE[] = {500, 1000};
-const int DIRECT_POINT_ADD = 1000;
 
 void gotoxy(int x, int y) {
     COORD coord;
@@ -63,7 +55,7 @@ int getMainInput(){
         if(c == '1') return 1;
         if(c == '2') return 2;
         if(c == '3') return 3;
-        if(c == 'q') return 0;
+        if(c == 'q') return 0; // quit
     }
 }
 
@@ -86,13 +78,13 @@ public:
 
     void set(T data, string color){
         clear();
-        gotoxy(10, 1);
+        gotoxy(12, 1);
         cout << color << data << RESET;
         counter = 0;
     }
 
     void clear(){
-        gotoxy(10, 1);
+        gotoxy(12, 1);
         cout << "_____";
     }
 };
@@ -104,8 +96,9 @@ private:
     int x, y;
     long long score;
     bool dead;
-public:
 
+public:
+    LastPoints<string> lastPoints;
     static vector<string> plane;
 
     Player() {}
@@ -123,10 +116,6 @@ public:
         gotoxy(x+2, y-1);
         cout << CYAN << plane[2] << RESET;
     }
-
-    //   \
-    // ===>
-    //   /
 
     void erase() {
         gotoxy(x, y);
@@ -204,13 +193,13 @@ public:
     friend class Game;
 };
 
-LastPoints<string> lastPoints;
 vector<string> Player::plane = vector<string>({"===>", "/", "\\"});
 
 class Object {
-public:
+protected:
     int x, y;
     string symbol;
+public:
     Object() {x=0; y=0;}
     Object(int x, int y, string symbol) : x(x), y(y), symbol(symbol){}
 
@@ -223,7 +212,7 @@ public:
 
     void erase() {
         gotoxy(x, y);
-        cout << " ";
+        cout << "  ";
     }
 
     // virtual function
@@ -250,7 +239,7 @@ public:
         }else if(c == 2){
             int r = (200 + rand() % 301);
             *p - r;
-            lastPoints.set("-" + to_string(r), RED);
+            p->lastPoints.set("-" + to_string(r), RED);
             return true;
         }
         return false;
@@ -287,24 +276,24 @@ public:
         short c = p->isColided<short>(x, y);
         if(c == 1){
             *p + 1000;
-            lastPoints.set("+1000", GREEN);
+            p->lastPoints.set("+1000", GREEN);
             return true;
         }else if(c == 2){
             int r = (500 + rand() % 501);
             *p + r; // coin means 500-1000 points
-            lastPoints.set("+" + to_string(r), GREEN);
+            p->lastPoints.set("+" + to_string(r), GREEN);
             return true;
         }
         return false;
     }
 };
 
-// Mystry Item That can be Arrow, Bomb, Coin or Nothing
-class Mystry: public Coin, public Bomb, public Arrow{
+// Mystery Item That can be Arrow, Bomb, Coin or Nothing
+class Mystery : public Coin, public Bomb, public Arrow{
 public:
-    Mystry() { }
+    Mystery() { }
     // default aurguments
-    Mystry(int startX, int startY, string symbol = "🎃") : Object(startX, startY, symbol) {}
+    Mystery (int startX, int startY, string symbol = "🎃") : Object(startX, startY, symbol) {}
 
     bool move() {
         // it disapper early
@@ -424,9 +413,9 @@ public:
             // add coins
             else if(r < percentage[diffLevel][0] + percentage[diffLevel][1] +  percentage[diffLevel][2])
                 objects.push_back(new Coin(width-1, h));
-            // mystry item 1% chance
+            // Mystery item 1% chance
             else if(diffLevel == 2 && r < percentage[diffLevel][0] + percentage[diffLevel][1] + percentage[diffLevel][2] + 1){
-                objects.push_back(new Mystry(width-1, h));
+                objects.push_back(new Mystery(width-1, h));
             }
         }
 
@@ -437,9 +426,9 @@ public:
         // draw player
         player->erase();
         player->draw();
-        *player + 1;
+        *player + 1; // add one point
         printScore();
-        lastPoints.update();
+        player->lastPoints.update();
         return true; // next frame avaiable
     }
 
@@ -517,7 +506,7 @@ void printFirstScreen(){
     cout << "\n\t\t3. "<<"◀"<<"  "<<"⚡"<<"       => Direct hit: You " << RED << "DIE" << RESET <<"☠️";
     cout << "\n\t\t4. "<<"🟡"<<"  "<<"🍏"<<"  "<<"💲"<<"  => On wings  : Increase score by (" << GREEN << "500-1000" << RESET <<")";
     cout << "\n\t\t5. "<<"🟡"<<"  "<<"🍏"<<"  "<<"💲"<<"  => Direct hit: Increase score by " << GREEN << "1000" << RESET;
-    cout << "\n\t\t6. "<<"🎃"<<"        "<<"  => "<< MAGENTA << "Mystry" << RESET << " Item: Can be " << MAGENTA << "AYTHING" << RESET << " [Hard Mode only]";
+    cout << "\n\t\t6. "<<"🎃"<<"        "<<"  => "<< YELLOW << "Mystery" << RESET << " Item: Can be " << MAGENTA << "AYTHING" << RESET << " [Hard Mode only]";
 
     cout << "\n\n\tEnter (1 / 2 / 3) to start the Game in (Easy / Normal / Hard) Mode\n";
     cout << "\n\t\t            Enter 'q' to Quit the Game\n";
@@ -529,13 +518,15 @@ void printFirstScreen(){
 }
 
 int main() {
-    srand(static_cast<unsigned>(time(nullptr)));
+    srand(time(0));
 
+    // for printing imoji
     SetConsoleOutputCP(CP_UTF8);
+
     Game::loadHighestScore();
     printFirstScreen();
 
-    int diffLevel = 0;
+    int diffLevel;
     while(diffLevel = getMainInput()){
         do{
             startAGame(diffLevel-1);
