@@ -21,6 +21,8 @@ const string GREEN = "\033[32m";
 const string YELLOW = "\033[33m";
 const string MAGENTA = "\033[35m";
 const string CYAN = "\033[36m";
+const string WHITE = "\033[37m";
+
 
 const int BombCount = 3;
 string BOMBS[BombCount] = {"💥", "💀", "🚁"};
@@ -78,14 +80,14 @@ public:
 
     void set(T data, string color){
         clear();
-        gotoxy(12, 1);
+        gotoxy(12, 2);
         cout << color << data << RESET;
         counter = 0;
     }
 
     void clear(){
-        gotoxy(12, 1);
-        cout << "_____";
+        gotoxy(12, 2);
+        cout << "     ";
     }
 };
 
@@ -127,7 +129,7 @@ public:
     }
 
     void moveUp() {
-        if (y > 3) {
+        if (y > 5) {
             erase();
             y--;
         }
@@ -321,23 +323,33 @@ class Game {
     Player *player;
     list<Object*> objects;
     int diffLevel;
+
+    bool borderState = true; // for border animation
+    string borderColor;
 public:
 
     Game(int diffLevel) {
         this->diffLevel = diffLevel;
-        player = new Player(2, (height+2)/2); // place at vertically center
+        player = new Player(2, (height+4)/2); // place at vertically center
+
+        switch(diffLevel){
+            case 0:
+                borderColor = WHITE;
+                break;
+            case 1:
+                borderColor = GREEN;
+                break;
+            default:
+                borderColor =  CYAN;
+        }
 
         system("cls");
-        gotoxy(0, 1);
-        cout << "________________________________________________________________________________";
-        gotoxy(0, height+1);
-        cout << "________________________________________________________________________________";
         
-        gotoxy(25, 0);
+        gotoxy(25, 1);
         cout << "Highest SCORE : " << highest_score[diffLevel];
-        gotoxy(55, 0);
+        gotoxy(55, 1);
         cout << "Difficulty : " << DIFFICULTY[diffLevel];
-        gotoxy(5, 0);
+        gotoxy(5, 1);
         cout << "SCORE : ";
     }
 
@@ -354,10 +366,32 @@ public:
     }
 
     void printScore(){
-        gotoxy(13, 0);
+        gotoxy(13, 1);
         cout << "          ";
-        gotoxy(13, 0);
+        gotoxy(13, 1);
         cout << player->score;
+    }
+    void animateBorder(){
+        // border animation
+        cout << borderColor;
+        if (borderState){
+            gotoxy(0, 3);
+            for(int i = 0; i<width/2; i++)
+                cout << "▂▃";
+            gotoxy(0, height+1);
+            for(int i = 0; i<width/2; i++)
+                cout << "▂▃";
+            borderState = false;
+        }else{
+            gotoxy(0, 3);
+            for(int i = 0; i<width/2; i++)
+                cout << "▃▂";
+            gotoxy(0, height+1);
+            for(int i = 0; i<width/2; i++)
+                cout << "▃▂";
+            borderState = true;
+        }
+        cout << RESET;
     }
 
     // update frame, return false for gameover
@@ -394,7 +428,7 @@ public:
         int maxObjectInBoard[3] = {20, 30, 40};
 
         // add new objects like arrow, bomb, coin
-        int h = rand() % (height-2)+2;
+        int h = rand() % (height-4)+4;
         if(objects.size() < maxObjectInBoard[diffLevel]){
             int r = rand() % (totalPercentage);
             // add arrow
@@ -405,7 +439,7 @@ public:
                 Bomb *b = new Bomb(width-1, h);
                 objects.push_back(b);
 
-                if(diffLevel == 2 && h > 4 && rand() % 5 == 0){
+                if(diffLevel == 2 && h > 5 && rand() % 5 == 0){
                     // use copy constructor for new bomb of same symbol
                     objects.push_back(new Bomb(*b));
                 }
@@ -427,8 +461,9 @@ public:
         player->erase();
         player->draw();
         *player + 1; // add one point
-        printScore();
-        player->lastPoints.update();
+        printScore(); // Update score board
+        animateBorder(); // update border
+        player->lastPoints.update(); // update last point counter
         return true; // next frame avaiable
     }
 
@@ -495,7 +530,7 @@ void startAGame(int diffLevel){
 
 void printFirstScreen(){
     system("cls");
-    cout << "\n\t\t\t\t"<<"🛩️"<<" FLY ME "<<"🛩️"<<"\n";
+    cout << "\n\t\t\t\t"<<"🛩️ "<< GREEN << " FLY ME " << RESET <<" 🛩️"<<"\n";
     cout << "\t\t\t"<<"🛩️"<<" A Project by Roll: " << GREEN << "2107050 " << RESET <<"🛩️"<<"\n\n";
     cout << CYAN << "\t\t\t\t     "<<Player::plane[2]<<"\n" << RESET;
     cout << GREEN <<"\t\t\t\t   "<< Player::plane[0] <<"\n" << RESET;
