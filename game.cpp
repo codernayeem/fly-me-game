@@ -543,15 +543,15 @@ void startAGame(int diffLevel){
 
 void printFirstScreen(){
     system("cls");
-    cout << "\n\t\t\t\t"<<"🛩️ "<< GREEN << " FLY ME " << RESET <<" 🛩️"<<"\n";
+    cout << "\n\t\t\t\t"<<"🛩️"<< GREEN << "  FLY ME " << RESET <<"🛩️"<<"\n";
     cout << "\t\t\t"<<"🛩️"<<" A Project by Roll: " << GREEN << "2107050 " << RESET <<"🛩️"<<"\n\n";
     cout << CYAN << "\t\t\t\t     "<<Player::plane[2]<<"\n" << RESET;
     cout << GREEN <<"\t\t\t\t   "<< Player::plane[0] <<"\n" << RESET;
     cout << CYAN << "\t\t\t\t     "<< Player::plane[1] <<"" << RESET;
     cout << "\n\tRules: ";
     cout << "\n\t\t1. "<<"💥"<<"  "<<"💀"<<"  "<<"🚁"<<"  => Touch them: You " << RED << "DIE" << RESET <<"☠️";
-    cout << "\n\t\t2. "<<"◀"<<"  "<<"⚡"<<"       => On wings  : Decrease score by (" << RED << "200-300" << RESET <<")";
-    cout << "\n\t\t3. "<<"◀"<<"  "<<"⚡"<<"       => Direct hit: You " << RED << "DIE" << RESET <<"☠️";
+    cout << "\n\t\t2. "<<"◀"<<"   "<<"⚡"<<"      => On wings  : Decrease score by (" << RED << "200-300" << RESET <<")";
+    cout << "\n\t\t3. "<<"◀"<<"   "<<"⚡"<<"      => Direct hit: You " << RED << "DIE" << RESET <<"☠️";
     cout << "\n\t\t4. "<<"🟡"<<"  "<<"🍏"<<"  "<<"💲"<<"  => On wings  : Increase score by (" << GREEN << "500-1000" << RESET <<")";
     cout << "\n\t\t5. "<<"🟡"<<"  "<<"🍏"<<"  "<<"💲"<<"  => Direct hit: Increase score by " << GREEN << "1000" << RESET;
     cout << "\n\t\t6. "<<"🎃"<<"        "<<"  => "<< YELLOW << "Mystery" << RESET << " Item: Can be " << MAGENTA << "AYTHING" << RESET << " [Hard Mode only]";
@@ -568,7 +568,7 @@ void printFirstScreen(){
 int main() {
     srand(time(0));
 
-    // for printing imoji
+    // for printing emojis
     SetConsoleOutputCP(CP_UTF8);
 
     Game::loadHighestScore();
