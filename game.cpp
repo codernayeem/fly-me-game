@@ -15,6 +15,7 @@ const string DIFFICULTY[] = {"Easy", "Normal", "Hard"};
 
 const string fileName = "highest_score.txt";
 
+// Colors used for printing
 const string RESET = "\033[0m";
 const string RED = "\033[31m";
 const string GREEN = "\033[32m";
@@ -23,17 +24,20 @@ const string MAGENTA = "\033[35m";
 const string CYAN = "\033[36m";
 const string WHITE = "\033[37m";
 
-
+// All Bombs Symbol
 const int BombCount = 3;
 string BOMBS[BombCount] = {"💥", "💀", "🚁"};
 
+// All Coins Symbol
 const int CoinsCount = 3;
 string COINS[CoinsCount] = {"🟡", "🍏", "💲"};
 
+// All Arrow Symbol
 const int ArrowCount = 2;
 string ARROWS[ArrowCount] = {"◀", "⚡"};
 
 
+// Transfer cursor to a specific coordinates
 void gotoxy(int x, int y) {
     COORD coord;
     coord.X = x;
@@ -61,10 +65,11 @@ int getMainInput(){
     }
 }
 
+// A class to print and update the last points
 template<class T>
 class LastPoints
 {
-    int counter;
+    short counter;
 
 public:
     LastPoints() : counter(0){ }
@@ -78,6 +83,7 @@ public:
             counter++;
     }
 
+    // print last points
     void set(T data, string color){
         clear();
         gotoxy(12, 2);
@@ -85,6 +91,7 @@ public:
         counter = 0;
     }
 
+    // clear last points
     void clear(){
         gotoxy(12, 2);
         cout << "     ";
@@ -189,7 +196,7 @@ public:
         }else if((y+1 == obj_y && x + 3 >= obj_x && x+2 <= obj_x) || (y-1 == obj_y && x + 3 >= obj_x && x+2 <= obj_x)){
             return 2; // on wings
         }
-        return 0;
+        return 0; // no hit
     }
 
     friend class Game;
@@ -225,6 +232,7 @@ public:
     }
 
     // pure virtual function
+    // return true if the object is colided
     virtual bool detectColide(Player *p) = 0;
 };
 
@@ -235,10 +243,10 @@ public:
 
     bool detectColide(Player *p){
         short c = p->isColided<short>(x, y);
-        if(c == 1){
+        if(c == 1){ // direct hit : DIE
             p->die();
             return true;
-        }else if(c == 2){
+        }else if(c == 2){  // wings hit : - (200 - 300)
             int r = (200 + rand() % 301);
             *p - r;
             p->lastPoints.set("-" + to_string(r), RED);
@@ -254,14 +262,14 @@ public:
     Bomb(int startX, int startY) : Object(startX, startY, BOMBS[rand() % BombCount]) {}
 
     // copy constructor
-    Bomb(const Bomb &b){
+    Bomb(Bomb &b){
         x = b.x;
-        y = b.y-1; // create new bomb at bottom
-        symbol = b.symbol; // same symbol
+        y = b.y-1;         // create new bomb at top
+        symbol = b.symbol; // with same symbol
     }
 
     bool detectColide(Player *p){
-        if(p->isColided<bool>(x, y)){
+        if(p->isColided<bool>(x, y)){ // direct / wings hit : DIE
             p->die();
             return true;
         }
@@ -276,13 +284,13 @@ public:
 
     bool detectColide(Player *p){
         short c = p->isColided<short>(x, y);
-        if(c == 1){
+        if(c == 1){             // direct hit : +1000
             *p + 1000;
             p->lastPoints.set("+1000", GREEN);
             return true;
-        }else if(c == 2){
+        }else if(c == 2){       // Wings hit : + 500-1000
             int r = (500 + rand() % 501);
-            *p + r; // coin means 500-1000 points
+            *p + r;
             p->lastPoints.set("+" + to_string(r), GREEN);
             return true;
         }
@@ -305,7 +313,7 @@ public:
     }
 
     bool detectColide(Player *p){
-        switch(rand() % 4){
+        switch(rand() % 4){ // acts randomly
             case 0:
                 return Bomb::detectColide(p);
             case 1:
@@ -322,7 +330,7 @@ public:
 class Game {
     Player *player;
     list<Object*> objects;
-    int diffLevel;
+    int diffLevel;          // Difficulty
 
     bool borderState = true; // for border animation
     string borderColor;
@@ -371,6 +379,7 @@ public:
         gotoxy(13, 1);
         cout << player->score;
     }
+
     void animateBorder(){
         // border animation
         cout << borderColor;
@@ -419,18 +428,19 @@ public:
             }
         }
 
+        // percentages of arrow, bomb, coin in each difficulty mode
         int percentage[3][3] = {
-            {4, 3, 7},
-            {5, 8, 4},
-            {4, 15, 1},
+            {4, 4, 7},
+            {5, 9, 4},
+            {4, 15, 2},
         };
-        int totalPercentage = 100;
+        // maximum objects on screen in each difficulty mode
         int maxObjectInBoard[3] = {20, 30, 40};
 
         // add new objects like arrow, bomb, coin
-        int h = rand() % (height-4)+4;
+        int h = rand() % (height-4)+4; // random height
         if(objects.size() < maxObjectInBoard[diffLevel]){
-            int r = rand() % (totalPercentage);
+            int r = rand() % (100);
             // add arrow
             if(r < percentage[diffLevel][0])
                 objects.push_back(new Arrow(width-1, h));
@@ -439,7 +449,7 @@ public:
                 Bomb *b = new Bomb(width-1, h);
                 objects.push_back(b);
 
-                if(diffLevel == 2 && h > 5 && rand() % 5 == 0){
+                if(diffLevel == 2 && h > 5 && rand() % 5 == 0){ // 20 % chance
                     // use copy constructor for new bomb of same symbol
                     objects.push_back(new Bomb(*b));
                 }
@@ -447,14 +457,15 @@ public:
             // add coins
             else if(r < percentage[diffLevel][0] + percentage[diffLevel][1] +  percentage[diffLevel][2])
                 objects.push_back(new Coin(width-1, h));
-            // Mystery item 1% chance
+            // Mystery item 1% chance at hard mode
             else if(diffLevel == 2 && r < percentage[diffLevel][0] + percentage[diffLevel][1] + percentage[diffLevel][2] + 1){
                 objects.push_back(new Mystery(width-1, h));
             }
         }
 
+        // draw all objects
         for (auto it: objects){
-            cout << it; // draw objects
+            cout << it; 
         }
 
         // draw player
@@ -473,11 +484,12 @@ public:
         system("cls");
         fflush(stdin);
 
+        // Game Over Screen
         cout << "\n\n\t\tGame Over! Score : " << GREEN << player->score << RESET << "  [" << DIFFICULTY[diffLevel] << " Mode]" << endl;
         if(highest_score[diffLevel] < player->score){
             cout << "\t\tNew Highest Score! You were ahead by " <<  player->score - highest_score[diffLevel] << " points!" << endl;
             highest_score[diffLevel] = player->score;
-            saveHighScore();
+            saveHighScore(); // save new high score in file
         }else{
             int z = player->score * 100 / highest_score[diffLevel];
             cout << "\t\tHighest Score : " << highest_score[diffLevel] << endl;
@@ -485,7 +497,7 @@ public:
         }
     }
 
-    // static Function
+    // static Function (Loading Highest Scores from File)
     static void loadHighestScore(){
         ifstream fin(fileName);
         if(!fin){
@@ -499,6 +511,7 @@ public:
         }
     }
 
+    // friend function
     friend void startAGame(int);
 };
 
@@ -517,13 +530,13 @@ void startAGame(int diffLevel){
             }
         }
         
-        // update Frame
+        // try to update Frame
         if(++game == false){
             game.gameOver();
             break;
         }
 
-        gotoxy(0, 0);
+        gotoxy(0, 0); // take cursor to the corner
         Sleep(100);
     }
 }
