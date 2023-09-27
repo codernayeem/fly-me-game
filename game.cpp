@@ -6,6 +6,20 @@
 #include <ctime>
 #include <fstream>
 
+// Used Things
+// 1. Inheritance (Arrow, Bomb, Coin inherited from Object class)
+// 2. Runtime Polymorphism
+// 3. Function & Operator Overloading
+// 4. Virtual Function & Pure Virtual Function
+// 5. Diamond Problem and virtually inheritance (between Object class and it’s childs)
+// 6. Constructor & Destructor
+// 7. Friend Function and Friend Class
+// 8. Templates
+// 9. Static Member Function & Static Member Variable
+// 10. File Handling (Saving & Loading Highest Scores)
+// 11. STL (vector, list)
+
+
 using namespace std;
 
 const int height = 15;
@@ -42,6 +56,14 @@ void gotoxy(int x, int y) {
     COORD coord;
     coord.X = x;
     coord.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+// Transfer cursor to a (0, 0)
+void gotoxy() {
+    COORD coord;
+    coord.X = 0;
+    coord.Y = 0;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
@@ -168,7 +190,7 @@ public:
             cout << CYAN << anim[i][1] << RESET;
             gotoxy(x+2, y-1);
             cout << CYAN << anim[i][2] << RESET;
-            gotoxy(0, 0);
+            gotoxy(); // take cursor to the corner
             Sleep(120);
         }
     }
@@ -536,7 +558,7 @@ void startAGame(int diffLevel){
             break;
         }
 
-        gotoxy(0, 0); // take cursor to the corner
+        gotoxy(); // take cursor to the corner
         Sleep(100);
     }
 }
